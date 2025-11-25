@@ -8,9 +8,7 @@ then
       sleep 0.1
     done
 
-    echo "PostgreSQL started"
+    echo "PostgreSQL started PROD"
 fi
-
-# python manage.py create_db
 
 exec "$@"

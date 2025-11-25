@@ -1,0 +1,68 @@
+###########
+# BUILDER #
+###########
+
+# pull de la imagen base
+FROM python:3.11-slim-bullseye as builder
+
+# Establecemos el entorno de trabajo
+WORKDIR /usr/src/app
+
+# Establecemos las variables de entorno
+ENV PYTHONDONTWRITEBYTECODE 1
+ENV PYTHONUNBUFFERED 1
+
+# install system dependencies
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends 
+
+# lint
+RUN pip install --upgrade pip
+RUN pip install flake8==7.3.0
+COPY . /usr/src/app/
+RUN flake8 --ignore=E501,F401 --exclude=venv,.venv .
+
+# instalamos las dependecias
+COPY ./requirements.txt .
+RUN pip wheel --no-cache-dir --no-deps --wheel-dir /usr/src/app/wheels -r requirements.txt
+
+###########
+#  FINAL  #
+###########
+
+# Pull de la imagen base
+FROM python:3.11-slim-bullseye
+
+# Creamos el directorio de la aplicacion 
+RUN mkdir -p /home/app
+
+# Creamos el usuario app
+RUN addgroup --system app && adduser --system --group app
+
+# Creamos el directorio de trabajo
+ENV HOME=/home/app
+ENV APP_HOME=/home/app/web
+RUN mkdir $APP_HOME
+WORKDIR $APP_HOME
+
+# Instalamos las dependencias
+RUN apt-get update && apt-get install -y --no-install-recommends netcat-openbsd
+COPY --from=builder /usr/src/app/wheels /wheels
+COPY --from=builder /usr/src/app/requirements.txt .
+RUN pip install --upgrade pip
+RUN pip install --no-cache /wheels/*
+
+#Copiamos el entrypoint
+COPY ./entrypoint.prod.sh $APP_HOME
+
+# Copiamos el proyecto
+COPY . $APP_HOME
+
+# Damos permisos a los archivos
+RUN chown -R app:app $APP_HOME
+
+# Cambiamos al usuario app
+USER app
+
+# Ejecutamos el entrypoint
+ENTRYPOINT ["/home/app/web/entrypoint.prod.sh"]
