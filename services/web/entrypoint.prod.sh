@@ -11,4 +11,11 @@ then
     echo "PostgreSQL started PROD"
 fi
 
+# Copy static files to the volume
+echo "Copying static files..."
+cp -r /home/app/web/static/* /home/app/web/project/static/
+
+# Change to app user
+su app
+
 exec "$@"

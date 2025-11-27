@@ -61,8 +61,5 @@ COPY . $APP_HOME
 # Damos permisos a los archivos
 RUN chown -R app:app $APP_HOME
 
-# Cambiamos al usuario app
-USER app
-
 # Ejecutamos el entrypoint
 ENTRYPOINT ["/home/app/web/entrypoint.prod.sh"]

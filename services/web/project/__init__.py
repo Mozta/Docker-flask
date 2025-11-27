@@ -1,4 +1,5 @@
-from flask import Flask, jsonify
+from flask import Flask, jsonify, send_from_directory
+# from werkzeug.utils import send_from_directory
 from flask_sqlalchemy import SQLAlchemy
 import os
 import dotenv
@@ -26,3 +27,8 @@ class User(db.Model):
 @app.route('/')
 def home():
     return jsonify(message="Welcome to my Flask app with Docker!")
+
+
+@app.route('/static/<path:filename>')
+def static_files(filename):
+    return send_from_directory(app.config['STATIC_FOLDER'], filename)
